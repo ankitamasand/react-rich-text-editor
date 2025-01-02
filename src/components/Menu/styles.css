@@ -1,0 +1,28 @@
+.hover-menu {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  display: flex;
+  gap: 5px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+  top: 0px;
+  left: 0px;
+  flex-direction: column;
+}
+
+.hover-menu-option {
+  cursor: pointer;
+  /* color: white; */
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  transition: background-color 0.3s;
+}
+
+.hover-menu-option:hover {
+  background-color: #0056b3;
+  color: white;
+}

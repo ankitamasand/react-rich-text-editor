@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import "./styles.css";
-import { serializeEditorContent, deserializeEditorContent } from './utils';
+import Menu from './components/Menu/Menu';
+import { calculateCursorPosition, deserializeEditorContent } from './utils';
 import useResizeAndDragImage from './hooks/useResizeAndDragImage';
 import useTextHighlight from './hooks/useTextHighlight';
+import useStorage from './hooks/useStorage';
+import useInsert from './hooks/useInsert';
 import { hydrateEditorContent } from './services/editorService';
 
 const RichTextEditor = () => {
@@ -16,6 +19,10 @@ const RichTextEditor = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const ImageHandles = useResizeAndDragImage(selectedImage, setSelectedImage, editorRef.current);
   const { highlightText, removeTextHighlights } = useTextHighlight();
+  const { getLastSavedContent, saveContent } = useStorage();
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ left: 0, top: 0 });
+  const insertElement = useInsert(editorRef.current);
 
   const handleImageClick = (e) => {
     e.target.classList.add('selected');
@@ -23,10 +30,10 @@ const RichTextEditor = () => {
   }
 
   const loadContentFromStorage = () => {
-    const savedContent = localStorage.getItem('editorJSON');
-    if (savedContent && editorRef.current) {
+    const lastSavedContent = getLastSavedContent();
+    if (lastSavedContent && editorRef.current) {
       editorRef.current.innerHTML = '';
-      const contentJSON = JSON.parse(savedContent);
+      const contentJSON = JSON.parse(lastSavedContent);
       if (contentJSON.children) {
         contentJSON.children.forEach((child) => {
           deserializeEditorContent(child, editorRef.current);
@@ -82,9 +89,22 @@ const RichTextEditor = () => {
       }
     }
     selection.collapseToEnd();
+  };
+
+  const showBlockElementsMenu = () => {
+    setIsMenuVisible(true);
+    const { left, top } = calculateCursorPosition();
+    setMenuPosition({ left, top });
   }
 
   const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      // e.preventDefault();
+      // setIsMenuVisible(true);
+      // const { left, top } = calculateCursorPosition();
+      // setMenuPosition({ left, top });
+    }
+
     if (e.ctrlKey || e.metaKey) {
       if (e.key === 'b') {
         e.preventDefault();
@@ -95,7 +115,7 @@ const RichTextEditor = () => {
       } else if (e.key === 'u') {
         e.preventDefault();
         applyFormatting('u');
-      }
+      } 
     }
   };
 
@@ -171,14 +191,6 @@ const RichTextEditor = () => {
     }
   };
 
-  const saveContent = () => {
-    if (editorRef.current) {
-      const content = serializeEditorContent(editorRef.current);
-      localStorage.setItem('editorJSON', JSON.stringify(content));
-      alert('content saved in JSON format');
-    }
-  };
-
   const clearEditor = () => {
     editorRef.current.innerHTML = '';
   };
@@ -190,7 +202,9 @@ const RichTextEditor = () => {
         <button onClick={() => applyFormatting('em')}><em>I</em></button>
         <button onClick={() => applyFormatting('u')}><u>U</u></button>
         <button 
-          onClick={() => setUrlInputVisible(!urlInputVisible)}
+          onClick={() => {
+            setUrlInputVisible(!urlInputVisible)
+          }}
           onMouseDown={saveSelection}
         >
           Link
@@ -211,8 +225,9 @@ const RichTextEditor = () => {
             onChange={handleFileChange}
           />
         </button>
+        <button onClick={showBlockElementsMenu}>Menu</button>
         <div className='actions'>
-          <button onClick={saveContent}>Save</button>
+          <button onClick={() => saveContent(editorRef.current)}>Save</button>
           <button onClick={loadContentFromStorage}>Load Content</button>
           <button onClick={clearEditor}>Clear All</button>
         </div>
@@ -252,6 +267,13 @@ const RichTextEditor = () => {
           onBlur={() => removeTextHighlights(editorRef.current)}
         />
         {ImageHandles}
+        {isMenuVisible && (
+          <Menu 
+            onInsert={insertElement}
+            onClose={() => setIsMenuVisible(false)}
+            position={menuPosition}
+          />
+        )}
       </div>
       
       

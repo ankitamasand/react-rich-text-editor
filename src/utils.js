@@ -39,4 +39,13 @@ export const deserializeEditorContent = (json, parent) => {
     }
     parent.appendChild(element);
   }
+};
+
+export const calculateCursorPosition = () => {
+  const selection = window.getSelection();
+  if (selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    return { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX };
+  }
 }

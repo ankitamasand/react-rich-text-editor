@@ -3,8 +3,8 @@
 }
 
 .wrapper {
-  padding: 20px;
   position: relative;
+  margin: 10px 30px;
 }
 
 .editor-content {
@@ -12,7 +12,8 @@
 }
 
 #editor {
-  border: 2px solid grey;
+  border: none;
+  /* border: 2px solid grey; */
   padding: 10px;
   min-height: 80vh;
   height: auto;
