@@ -16,6 +16,7 @@ const RichTextEditor = () => {
   const [imgInput, setImgInput] = useState('');
   const savedSelection = useRef(null); // because this needs to be preserved across renders
   const fileInputRef = useRef();
+  const urlInputRef = useRef();
   const [selectedImage, setSelectedImage] = useState(null);
   const ImageHandles = useResizeAndDragImage(selectedImage, setSelectedImage, editorRef.current);
   const { highlightText, removeTextHighlights } = useTextHighlight();
@@ -52,6 +53,12 @@ const RichTextEditor = () => {
     editorRef.current.focus();
     loadContentFromStorage();
   }, []);
+
+  useEffect(() => {
+    if (urlInputRef.current) {
+      urlInputRef.current.focus();
+    }
+  }, [urlInputVisible])
 
   const saveSelection = () => {
     const selection = window.getSelection();
@@ -126,17 +133,21 @@ const RichTextEditor = () => {
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
+      const selectedText = range.extractContents();
 
       // create an <a> element
       const anchorNode = document.createElement('a');
       anchorNode.href = url;
-      anchorNode.textContent = range.toString();
       anchorNode.target = '_blank';
       anchorNode.rel = 'noopener noreferrer';
-
-      range.surroundContents(anchorNode);
-
-      selection.collapseToEnd();
+      anchorNode.appendChild(selectedText);
+      
+      range.insertNode(anchorNode);
+      const newRange = document.createRange();
+      newRange.setStartAfter(anchorNode);
+      newRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
     }
 
     setUrl('');
@@ -234,15 +245,17 @@ const RichTextEditor = () => {
       </div>
 
       {urlInputVisible && (
-        <div className='url-input'>
+        <form className='url-input'>
           <input
+            ref={urlInputRef}
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder='Enter Url'
+            placeholder='Enter URL'
+            tabIndex={0}
           />
-          <button onClick={applyHyperLink}>Apply Link</button>
-        </div>
+          <button onClick={applyHyperLink} type="submit">Apply Link</button>
+        </form>
       )}
 
       {imgInputVisible && (
